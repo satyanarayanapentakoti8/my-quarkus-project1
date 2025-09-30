@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quarkus-native-app3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: quarkus-native-app3
+  template:
+    metadata:
+      labels:
+        app: quarkus-native-app3
+    spec:
+      serviceAccountName: spring-cloud-k8s-sa
+      containers:
+        - name: quarkus-native-app3
+          image: quarkus-app-image3:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+
+

@@ -1,0 +1,31 @@
+# -------------------------------
+# Stage 1: Build Native Executable
+# -------------------------------
+FROM quay.io/quarkus/ubi9-quarkus-mandrel-builder-image:jdk-21 AS build
+
+USER 0
+WORKDIR /project
+COPY . .
+RUN chown -R 1001:0 /project && chmod -R g+rwX /project
+USER 1001
+
+RUN ./mvnw clean package -Pnative -DskipTests \
+    -Dquarkus.native.additional-build-args=--libc=glibc
+
+# --------------------------------
+# Stage 2: Runtime with zlib
+# --------------------------------
+FROM registry.access.redhat.com/ubi9/ubi-minimal
+
+# Install zlib (libz) dependency
+USER 0
+RUN microdnf install -y zlib --setopt install_weak_deps=false && \
+    microdnf clean all
+
+WORKDIR /work
+COPY --from=build /project/target/*-runner /work/application
+RUN chmod +x /work/application
+
+EXPOSE 8080
+USER 1001
+ENTRYPOINT ["/work/application"]
